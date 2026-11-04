@@ -101,7 +101,7 @@ async function directAsk(payload, key) {
 }
 
 async function askServer(payload) {
-  const r = await fetch('api/chat', {
+  const r = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -112,15 +112,18 @@ async function askServer(payload) {
 }
 
 async function probe() {
-  // 探测后端是否存在（不消耗 key）
+  // 探测后端是否存在（发空问题，不消耗 key）。
+  // 服务端检查顺序是 method → key → 空问题：
+  //   503 = 后端在、但没配 Key；400 = 后端在且 Key 已配好（空问题被拒）。
   try {
-    const r = await fetch('api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: '' }) });
-    const d = await r.json().catch(function () { return {}; });
-    if (r.status === 503 || r.status === 400) {
-      document.getElementById('mode').textContent = 'AI 已接（待填 Key）';
+    const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: '' }) });
+    await r.json().catch(function () { return {}; });
+    if (r.status === 503) {
+      document.getElementById('mode').textContent = '后端已接（待填 Key）';
       document.getElementById('keyrow').classList.add('on');
       return 'needkey';
     }
+    // 400/405 都说明函数已被 Vercel 正确部署且 Key 已配
     document.getElementById('mode').textContent = 'AI 已接 ✓';
     return 'ok';
   } catch (e) {
