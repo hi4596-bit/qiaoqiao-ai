@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>乔侨爱学习 · AI 问答（直连版·无需部署）</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6f8; color: #1f2329; }
+.app { max-width: 760px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+header { padding: 16px 18px 10px; background: #fff; border-bottom: 1px solid #eee; }
+header h1 { margin: 0; font-size: 18px; }
+.sub { margin: 4px 0 8px; color: #8a9099; font-size: 13px; }
+.bar { font-size: 12px; color: #8a9099; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.bar select { font-size: 12px; padding: 2px 6px; }
+main { flex: 1; overflow-y: auto; padding: 16px; }
+.msg { margin-bottom: 14px; max-width: 92%; }
+.msg.user { margin-left: auto; }
+.bubble { padding: 10px 13px; border-radius: 12px; line-height: 1.6; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+.msg.user .bubble { background: #4c6ef5; color: #fff; border-bottom-right-radius: 3px; }
+.msg.bot .bubble { background: #fff; border: 1px solid #eee; border-bottom-left-radius: 3px; }
+.bubble .src { display: block; margin-top: 6px; font-size: 12px; color: #aaa; }
+footer { display: flex; gap: 8px; padding: 12px; background: #fff; border-top: 1px solid #eee; }
+#q { flex: 1; padding: 11px 13px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; outline: none; }
+#send { padding: 0 18px; border: 0; border-radius: 10px; background: #4c6ef5; color: #fff; font-size: 14px; cursor: pointer; }
+
+
+.setup { background:#fff; border:1px solid #eee; border-radius:12px; padding:14px; margin:12px 0; font-size:13px; line-height:1.8; }
+.setup h3 { margin:0 0 6px; font-size:14px; }
+.setup input[type=password] { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:9px; font-size:14px; }
+.setup .row { display:flex; gap:8px; margin-top:8px; align-items:center; }
+.setup button { padding:8px 16px; border:0; border-radius:9px; background:#4c6ef5; color:#fff; cursor:pointer; font-size:13px; }
+.setup .hint { color:#8a9099; font-size:12px; }
+.keyline { display:flex; gap:8px; align-items:center; font-size:12px; color:#8a9099; padding:6px 18px; background:#fff; border-bottom:1px solid #eee; }
+.keyline input { flex:1; padding:6px 10px; border:1px solid #ddd; border-radius:8px; }
+.keyline a { color:#4c6ef5; text-decoration:none; }
+.bubble .tag { display:inline-block; font-size:11px; color:#4c6ef5; background:#eef2ff; padding:1px 7px; border-radius:8px; margin-bottom:5px; }
+.err { color:#e03131; }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>乔侨爱学习 · AI 问答</h1>
+    <p class="sub">零后端直连版：不用 Vercel、不用部署。填一次自己的 DeepSeek Key 即可聊，Key 只存在你浏览器里。</p>
+    <div class="keyline">
+      数据源：<select id="src"><option value="sample">演示数据</option><option value="app">本机真实数据</option></select>
+      <span id="stat"></span>
+    </div>
+  </header>
+  <main id="log">
+    <div class="setup" id="setup">
+      <h3>第一步（只做一次）：填你的 DeepSeek Key</h3>
+      <div class="hint">在 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com/api_keys</a> 申请，形如 sk-…。只保存在你自己的浏览器（localStorage），不上传、不进网页源码、别人拿不到。</div>
+      <div class="row">
+        <input id="key" type="password" placeholder="sk-…" autocomplete="off">
+        <button id="save">保存</button>
+        <button id="clear" style="background:#adb5bd">清除</button>
+      </div>
+      <div class="hint" id="kstat" style="margin-top:6px"></div>
+    </div>
+  </main>
+  <footer>
+    <input id="q" placeholder="例如：广开土木工程学费多少 / 按示例-文老师的风格写一条" autocomplete="off">
+    <button id="send">发送</button>
+  </footer>
+</div>
+<script>
+window.SAMPLE_DATA = {"kb": [{"类型": "国开", "院校": "国家开放大学（示例）", "专业": "畜牧兽医（示例）", "层次": "高起专", "学制": "2.5年", "第一学年学费": "3420元/年", "第二学年学费": "3420元/年", "教材费": "500元/年", "文本": "【示例数据】国开畜牧兽医：学制2.5年，学费3420元/年、只收两年，教材费500元/年，直接交学校。"}, {"类型": "广开", "院校": "广东开放大学（示例）", "专业": "土木工程（示例）", "层次": "本科", "学制": "2.5年", "收费标准": "8591", "第一次收费": "3436", "第二次收费": "3436", "第三次收费": "1719", "文本": "【示例数据】广开土木工程本科：总收费8591，分三次交 3436/3436/1719。"}], "degree": [{"学校": "示例大学", "项目": "学位外语", "要求": "【示例】成绩60分以上（100分制，60为及格线）。", "注意事项": "示例"}], "affiliation": [{"单位名称": "示例培训中心", "高校": "示例高校"}], "cards": [{"name": "示例-文老师（演示）", "owner": "示例", "text": "# 风格卡：示例-文老师（演示，非真实）\n\n## 人称\n第三人称「老师」口播。\n## 钩子\n开头直接抛痛点。\n## 结尾\n收藏这条，关注老师。\n\n> 这是演示卡，真实数据请运行 scripts/export_web_data.py 后打开网页。"}]};
+
+</script>
+<script>
+'use strict';
+var D = window.SAMPLE_DATA || {kb:[],degree:[],affiliation:[],cards:[]};
+var KEY = '';
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function addMsg(role, text, tag){
+  var log=document.getElementById('log'), m=document.createElement('div'), b=document.createElement('div');
+  m.className='msg '+role; b.className='bubble';
+  b.innerHTML=(tag?'<span class="tag">'+esc(tag)+'</span><br>':'')+esc(text).replace(/\n/g,'<br>');
+  m.appendChild(b); log.appendChild(m); log.scrollTop=log.scrollHeight;
+  return m;
+}
+function tokens(q){
+  var clean=q.replace(/[\s\p{P}]+/gu,''), out=new Set();
+  for(var i=0;i<clean.length;i++) for(var n=2;n<=Math.min(4,clean.length-i);n++) out.add(clean.substr(i,n));
+  return Array.from(out);
+}
+function search(blocks,q,limit){
+  var toks=tokens(q), scored=[];
+  for(var i=0;i<blocks.length;i++){
+    var text=typeof blocks[i]==='string'?blocks[i]:JSON.stringify(blocks[i]), score=0;
+    for(var j=0;j<toks.length;j++) if(text.indexOf(toks[j])>=0) score+=toks[j].length;
+    if(score>0) scored.push({b:blocks[i],score:score});
+  }
+  scored.sort(function(a,b){return b.score-a.score;});
+  return scored.slice(0,limit||5);
+}
+function blockText(b){
+  if(typeof b==='string') return b;
+  if(b.text) return b.text;
+  return Object.keys(b).map(function(k){return k+'：'+b[k];}).join('；');
+}
+function build(q){
+  var blocks=[].concat(D.kb||[],D.degree||[],D.affiliation||[]);
+  var hits=search(blocks,q,5);
+  var facts=hits.map(function(h){return '· '+blockText(h.b).slice(0,400);}).join('\n')||'（没有检索到相关资料）';
+  var style='', sm=q.match(/按(.+?)的风格|(.+?)风格写/);
+  if(sm){
+    var name=(sm[1]||sm[2]||'').trim();
+    var cards=(D.cards||[]).filter(function(c){return !name||c.name.indexOf(name)>=0;});
+    style=cards.slice(0,1).map(function(c){return c.text||'';}).join('\n');
+    if(!style&&(D.cards||[]).length) style=D.cards[0].text||'';
+  }
+  return {question:q,facts:facts,style:style};
+}
+function localFallback(p){
+  return 'AI 没连上，先给你资料检索结果：\n\n'+p.facts+(p.style?'\n\n（风格卡要点）\n'+p.style.slice(0,400):'');
+}
+async function ask(p){
+  var r=await fetch('https://api.deepseek.com/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},
+    body:JSON.stringify({
+      model:'deepseek-chat',
+      messages:[
+        {role:'system',content:'你是「乔侨爱学习」业务问答助手。只依据【参考资料】回答，资料里没有的数字/学费/政策一律明确说「资料里没有，请以官方表为准」，绝对不要编造、不要凭记忆补数字。有【风格卡】时严格模仿其人称、开头钩子、字数、分段、结尾和标题习惯。用中文口语、简洁、能直接念；回答控制在500字内，除非用户明确要求写完整口播稿。'},
+        {role:'user',content:'【参考资料】\n'+p.facts+'\n\n【风格卡】\n'+(p.style||'（无）')+'\n\n【用户问题】\n'+p.question}
+      ],
+      temperature:0.7,max_tokens:1200,stream:false
+    })
+  });
+  if(!r.ok){
+    var d=await r.json().catch(function(){return {};});
+    var hint=r.status===401?'Key 无效或已过期':r.status===402?'账户余额不足':r.status===429?'请求太频繁，稍后再试':('HTTP '+r.status);
+    throw new Error(hint+(d.error&&d.error.message?'：'+d.error.message:''));
+  }
+  var d=await r.json();
+  var a=d&&d.choices&&d.choices[0]&&d.choices[0].message?d.choices[0].message.content:'';
+  if(!a) throw new Error('模型没有返回内容');
+  return a;
+}
+function saveKey(){
+  var v=document.getElementById('key').value.trim();
+  if(!v){ document.getElementById('kstat').innerHTML='<span class="err">请先填 Key</span>'; return; }
+  KEY=v;
+  try{ localStorage.setItem('qiaoqiao_key',v); }catch(e){}
+  document.getElementById('kstat').textContent='已就绪 ✓（只存在你自己的浏览器里）';
+  document.getElementById('setup').style.display='none';
+  addMsg('bot','Key 已就绪。可以问我了，例如：广开土木工程学费多少 / 按示例-文老师的风格写一条。');
+}
+function clearKey(){
+  KEY=''; try{ localStorage.removeItem('qiaoqiao_key'); }catch(e){}
+  document.getElementById('key').value='';
+  document.getElementById('kstat').textContent='已清除';
+  document.getElementById('setup').style.display='block';
+}
+async function send(){
+  var q=document.getElementById('q').value.trim();
+  if(!q) return;
+  if(!KEY){ addMsg('bot','还没填 DeepSeek Key，请在上方的框里填好点「保存」。（没有 Key 也能试用下方的「资料检索」降级结果）'); }
+  document.getElementById('q').value='';
+  addMsg('user',q);
+  var p=build(q);
+  if(!KEY){ addMsg('bot',localFallback(p),'检索结果'); return; }
+  var wait=addMsg('bot','正在查资料并让 AI 组织回答…');
+  try{
+    var a=await ask(p);
+    if(wait.parentNode) wait.parentNode.removeChild(wait);
+    addMsg('bot',a,'DeepSeek');
+  }catch(e){
+    if(wait.parentNode) wait.parentNode.removeChild(wait);
+    addMsg('bot',localFallback(p)+'\n\n———\nAI 调用失败：'+e.message,'检索结果');
+  }
+}
+document.getElementById('save').addEventListener('click',saveKey);
+document.getElementById('clear').addEventListener('click',clearKey);
+document.getElementById('send').addEventListener('click',send);
+document.getElementById('q').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
+document.getElementById('src').addEventListener('change',function(){
+  // 演示数据 / 本机真实数据（若内联了 app-data.js）
+  D=(document.getElementById('src').value==='app'&&typeof window.APP_DATA!=='undefined')?window.APP_DATA:(window.SAMPLE_DATA||{kb:[],degree:[],affiliation:[],cards:[]});
+  document.getElementById('stat').textContent='简章 '+(D.kb||[]).length+' · 政策 '+(D.degree||[]).length+' · 风格卡 '+(D.cards||[]).length;
+});
+(function boot(){
+  try{ var k=localStorage.getItem('qiaoqiao_key'); if(k){KEY=k;document.getElementById('setup').style.display='none';document.getElementById('kstat').textContent='已就绪 ✓（从本机恢复）';} }catch(e){}
+  document.getElementById('stat').textContent='简章 '+(D.kb||[]).length+' · 政策 '+(D.degree||[]).length+' · 风格卡 '+(D.cards||[]).length;
+  addMsg('bot','你好，我是「乔侨爱学习」AI 问答（零后端直连版）。\n不用注册平台、不用部署：填一次你自己的 DeepSeek Key 就能聊。我先从业务资料查事实，再让 AI 照风格卡回答，数字不瞎编。\n不填 Key 也能用「资料检索」看效果。');
+})();
+if(typeof global!=='undefined'){global.build=build;global.tokens=tokens;global.search=search;}
+
+</script>
+</body>
+</html>
