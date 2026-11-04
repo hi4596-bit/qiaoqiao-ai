@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>乔侨爱学习 · AI 问答</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.mode { font-size:12px; color:#8a9099; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.mode b { color:#4c6ef5; font-weight:600; }
+.keyrow { margin-top:6px; font-size:12px; color:#8a9099; display:none; gap:6px; align-items:center; }
+.keyrow.on { display:flex; }
+.keyrow input { flex:1; min-width:160px; padding:5px 8px; border:1px solid #ddd; border-radius:8px; font-size:12px; }
+.bubble .tag { display:inline-block; font-size:11px; color:#4c6ef5; background:#eef2ff; padding:1px 7px; border-radius:8px; margin-bottom:5px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>乔侨爱学习 · AI 问答</h1>
+    <p class="sub">接 DeepSeek：先从业务资料里查事实，再让 AI 照着风格卡回答。数字只认资料，不编。</p>
+    <div class="bar">
+      <div class="mode">
+        <span>数据源：<select id="src"><option value="sample">演示数据</option><option value="app">本机真实数据</option></select></span>
+        <span>状态：<b id="mode">检测中…</b></span>
+        <span id="stat"></span>
+      </div>
+    </div>
+    <div class="keyrow" id="keyrow">
+      <span>没部署后端？可填自己的 DeepSeek Key 直连（仅本机自用）：</span>
+      <input id="mykey" type="password" placeholder="sk-…" autocomplete="off">
+      <label><input type="checkbox" id="usemykey"> 直连</label>
+    </div>
+  </header>
+  <main id="log"></main>
+  <footer>
+    <input id="q" placeholder="例如：广开土木工程学费多少 / 按示例-文老师的风格写一条" autocomplete="off">
+    <button id="send">发送</button>
+  </footer>
+</div>
+<script src="data/sample-data.js"></script>
+<script src="data/app-data.js" onerror="void 0"></script>
+<script src="chat.js"></script>
+</body>
+</html>

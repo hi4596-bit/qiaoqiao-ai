@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>乔侨爱学习 · AI 问答（单文件）</title>
+<style>* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6f8; color: #1f2329; }
+.app { max-width: 760px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+header { padding: 16px 18px 10px; background: #fff; border-bottom: 1px solid #eee; }
+header h1 { margin: 0; font-size: 18px; }
+.sub { margin: 4px 0 8px; color: #8a9099; font-size: 13px; }
+.bar { font-size: 12px; color: #8a9099; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.bar select { font-size: 12px; padding: 2px 6px; }
+main { flex: 1; overflow-y: auto; padding: 16px; }
+.msg { margin-bottom: 14px; max-width: 92%; }
+.msg.user { margin-left: auto; }
+.bubble { padding: 10px 13px; border-radius: 12px; line-height: 1.6; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+.msg.user .bubble { background: #4c6ef5; color: #fff; border-bottom-right-radius: 3px; }
+.msg.bot .bubble { background: #fff; border: 1px solid #eee; border-bottom-left-radius: 3px; }
+.bubble .src { display: block; margin-top: 6px; font-size: 12px; color: #aaa; }
+footer { display: flex; gap: 8px; padding: 12px; background: #fff; border-top: 1px solid #eee; }
+#q { flex: 1; padding: 11px 13px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; outline: none; }
+#send { padding: 0 18px; border: 0; border-radius: 10px; background: #4c6ef5; color: #fff; font-size: 14px; cursor: pointer; }
+
+.mode { font-size:12px; color:#8a9099; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.mode b { color:#4c6ef5; font-weight:600; }
+.keyrow { margin-top:6px; font-size:12px; color:#8a9099; display:none; gap:6px; align-items:center; }
+.keyrow.on { display:flex; }
+.keyrow input { flex:1; min-width:160px; padding:5px 8px; border:1px solid #ddd; border-radius:8px; font-size:12px; }
+.bubble .tag { display:inline-block; font-size:11px; color:#4c6ef5; background:#eef2ff; padding:1px 7px; border-radius:8px; margin-bottom:5px; }
+</style>
+<style>
+.mode { font-size:12px; color:#8a9099; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.mode b { color:#4c6ef5; font-weight:600; }
+.keyrow { margin-top:6px; font-size:12px; color:#8a9099; display:none; gap:6px; align-items:center; }
+.keyrow.on { display:flex; }
+.keyrow input { flex:1; min-width:160px; padding:5px 8px; border:1px solid #ddd; border-radius:8px; font-size:12px; }
+.bubble .tag { display:inline-block; font-size:11px; color:#4c6ef5; background:#eef2ff; padding:1px 7px; border-radius:8px; margin-bottom:5px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>乔侨爱学习 · AI 问答</h1>
+    <p class="sub">接 DeepSeek：先从业务资料里查事实，再让 AI 照着风格卡回答。数字只认资料，不编。</p>
+    <div class="bar">
+      <div class="mode">
+        <span>数据源：<select id="src"><option value="sample">演示数据</option><option value="app">本机真实数据</option></select></span>
+        <span>状态：<b id="mode">检测中…</b></span>
+        <span id="stat"></span>
+      </div>
+    </div>
+    <div class="keyrow" id="keyrow">
+      <span>没部署后端？可填自己的 DeepSeek Key 直连（仅本机自用）：</span>
+      <input id="mykey" type="password" placeholder="sk-…" autocomplete="off">
+      <label><input type="checkbox" id="usemykey"> 直连</label>
+    </div>
+  </header>
+  <main id="log"></main>
+  <footer>
+    <input id="q" placeholder="例如：广开土木工程学费多少 / 按示例-文老师的风格写一条" autocomplete="off">
+    <button id="send">发送</button>
+  </footer>
+</div>
+<script>window.SAMPLE_DATA = {"kb": [{"类型": "国开", "院校": "国家开放大学（示例）", "专业": "畜牧兽医（示例）", "层次": "高起专", "学制": "2.5年", "第一学年学费": "3420元/年", "第二学年学费": "3420元/年", "教材费": "500元/年", "文本": "【示例数据】国开畜牧兽医：学制2.5年，学费3420元/年、只收两年，教材费500元/年，直接交学校。"}, {"类型": "广开", "院校": "广东开放大学（示例）", "专业": "土木工程（示例）", "层次": "本科", "学制": "2.5年", "收费标准": "8591", "第一次收费": "3436", "第二次收费": "3436", "第三次收费": "1719", "文本": "【示例数据】广开土木工程本科：总收费8591，分三次交 3436/3436/1719。"}], "degree": [{"学校": "示例大学", "项目": "学位外语", "要求": "【示例】成绩60分以上（100分制，60为及格线）。", "注意事项": "示例"}], "affiliation": [{"单位名称": "示例培训中心", "高校": "示例高校"}], "cards": [{"name": "示例-文老师（演示）", "owner": "示例", "text": "# 风格卡：示例-文老师（演示，非真实）\n\n## 人称\n第三人称「老师」口播。\n## 钩子\n开头直接抛痛点。\n## 结尾\n收藏这条，关注老师。\n\n> 这是演示卡，真实数据请运行 scripts/export_web_data.py 后打开网页。"}]};
+</script>
+
+<script>'use strict';
+
+function getData() {
+  const which = document.getElementById('src').value;
+  if (which === 'app') {
+    if (typeof window.APP_DATA === 'undefined') {
+      document.getElementById('src').value = 'sample';
+      return window.SAMPLE_DATA || { kb: [], degree: [], affiliation: [], cards: [] };
+    }
+    return window.APP_DATA;
+  }
+  return window.SAMPLE_DATA || { kb: [], degree: [], affiliation: [], cards: [] };
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function addMsg(role, text, tag) {
+  const log = document.getElementById('log');
+  const m = document.createElement('div');
+  m.className = 'msg ' + role;
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.innerHTML = (tag ? '<span class="tag">' + esc(tag) + '</span><br>' : '') +
+    esc(text).replace(/\n/g, '<br>');
+  m.appendChild(b);
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+}
+function updateStat(D) {
+  document.getElementById('stat').textContent =
+    '简章 ' + (D.kb || []).length + ' · 政策 ' + (D.degree || []).length + ' · 风格卡 ' + (D.cards || []).length;
+}
+
+// ---- 轻量检索：先从资料里找相关事实，再交给 AI（避免 AI 凭空编）----
+function tokens(q) {
+  const clean = q.replace(/[\s\p{P}]+/gu, '');
+  const out = new Set();
+  for (let i = 0; i < clean.length; i++)
+    for (let n = 2; n <= Math.min(4, clean.length - i); n++) out.add(clean.substr(i, n));
+  return [...out];
+}
+function search(blocks, q, limit) {
+  const toks = tokens(q), scored = [];
+  for (const b of blocks) {
+    const text = typeof b === 'string' ? b : JSON.stringify(b);
+    let score = 0;
+    for (const t of toks) if (text.includes(t)) score += t.length;
+    if (score > 0) scored.push({ b, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit || 4);
+}
+function blockText(b) {
+  if (typeof b === 'string') return b;
+  if (b.text) return b.text;
+  return Object.entries(b).map(function (kv) { return kv[0] + '：' + kv[1]; }).join('；');
+}
+
+// 组装发给服务端的 payload（前端只传明文片段，不碰 key）
+function buildPayload(D, q) {
+  const blocks = [].concat(D.kb || [], D.degree || [], D.affiliation || []);
+  const hits = search(blocks, q, 5);
+  const facts = hits.map(function (h) { return '· ' + blockText(h.b).slice(0, 400); }).join('\n')
+    || '（本次没有检索到相关资料）';
+
+  let style = '';
+  const sm = q.match(/按(.+?)的风格|(.+?)风格写/);
+  if (sm) {
+    const name = (sm[1] || sm[2] || '').trim();
+    const cards = (D.cards || []).filter(function (c) { return !name || c.name.indexOf(name) >= 0; });
+    style = cards.slice(0, 1).map(function (c) { return c.text || ''; }).join('\n');
+    if (!style && (D.cards || []).length) style = D.cards[0].text || '';
+  }
+  return { question: q, facts: facts, style: style };
+}
+
+function localFallback(payload) {
+  let s = 'AI 服务当前不可用，先给你资料检索结果：\n\n' + payload.facts;
+  if (payload.style) s += '\n\n（附风格卡写法要点）\n' + payload.style.slice(0, 400);
+  return s;
+}
+
+// 直连模式（用户自己填 key，仅本机自用；可能被浏览器 CORS 拦）
+async function directAsk(payload, key) {
+  const r = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: '只依据【参考资料】回答，资料里没有的数字一律说「以官方表为准」，绝不编造。有【风格卡】就严格模仿其写法。用中文口语、简洁。' },
+        { role: 'user', content: '【参考资料】\n' + payload.facts + '\n\n【风格卡】\n' + payload.style + '\n\n【用户问题】\n' + payload.question }
+      ],
+      stream: false
+    })
+  });
+  if (!r.ok) throw new Error('直连失败 HTTP ' + r.status + '（多半是浏览器 CORS 限制，建议用 Vercel 部署版）');
+  const d = await r.json();
+  return d.choices[0].message.content;
+}
+
+async function askServer(payload) {
+  const r = await fetch('api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const d = await r.json().catch(function () { return {}; });
+  if (!r.ok || !d.answer) throw new Error(d.error || ('HTTP ' + r.status));
+  return d.answer;
+}
+
+async function probe() {
+  // 探测后端是否存在（不消耗 key）
+  try {
+    const r = await fetch('api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: '' }) });
+    const d = await r.json().catch(function () { return {}; });
+    if (r.status === 503 || r.status === 400) {
+      document.getElementById('mode').textContent = 'AI 已接（待填 Key）';
+      document.getElementById('keyrow').classList.add('on');
+      return 'needkey';
+    }
+    document.getElementById('mode').textContent = 'AI 已接 ✓';
+    return 'ok';
+  } catch (e) {
+    document.getElementById('mode').textContent = '检索模式（无后端）';
+    document.getElementById('keyrow').classList.add('on');
+    return 'none';
+  }
+}
+
+async function send() {
+  const q = document.getElementById('q').value.trim();
+  if (!q) return;
+  document.getElementById('q').value = '';
+  addMsg('user', q);
+  const D = getData();
+  const payload = buildPayload(D, q);
+  addMsg('bot', '正在查资料并让 AI 组织回答…');
+  // 移除上一条「正在…」占位
+  const log = document.getElementById('log');
+  const placeholder = log.lastChild;
+
+  try {
+    let answer;
+    const useMyKey = document.getElementById('usemykey') && document.getElementById('usemykey').checked;
+    const myKey = document.getElementById('mykey') ? document.getElementById('mykey').value.trim() : '';
+    if (useMyKey && myKey) {
+      answer = await directAsk(payload, myKey);
+    } else {
+      answer = await askServer(payload);
+    }
+    if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+    addMsg('bot', answer, 'DeepSeek');
+  } catch (e) {
+    if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+    addMsg('bot', localFallback(payload) + '\n\n———\n提示：' + e.message, '检索结果');
+  }
+}
+
+document.getElementById('send').addEventListener('click', send);
+document.getElementById('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+document.getElementById('src').addEventListener('change', function () { updateStat(getData()); });
+
+updateStat(getData());
+addMsg('bot', '你好，我是「乔侨爱学习」AI 问答。\n我会先从业务资料里查事实，再让 AI 照着风格卡回答，数字不瞎编。\n试试：广开土木工程学费多少 / 按示例-文老师的风格写一条。');
+probe();
+
+// 便于本地测试暴露
+if (typeof global !== 'undefined') {
+  global.buildPayload = buildPayload;
+  global.tokens = tokens;
+  global.search = search;
+}
+</script>
+</body>
+</html>

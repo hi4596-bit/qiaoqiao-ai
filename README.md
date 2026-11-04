@@ -48,3 +48,10 @@ python scripts/export_web_data.py   # 生成 web/data/app-data.js（含真实业
 工具脚本按 MIT 开源；`examples/` 为虚构示例。业务专用技能（含真实口径/样稿）仅在本机使用，未包含在本仓库。
 
 <!-- pages trigger -->
+
+
+## AI 版（接大模型）
+`web/chat.html` + `api/chat.js`：网页把「检索到的事实 + 风格卡 + 问题」发给服务端中转，服务端用环境变量里的 `DEEPSEEK_API_KEY` 调 DeepSeek，Key 不下发到浏览器。
+- 部署：见 [部署-AI版.md](部署-AI版.md)（Vercel 导入本仓库 + 填一个环境变量即可）。
+- 没后端的环境（GitHub Pages / 本地双击）会自动降级成资料检索结果，不会白屏。
+- 隐私：公开站点只用演示数据；真实业务数据接大模型请改私有仓库。

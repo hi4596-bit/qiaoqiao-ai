@@ -13,3 +13,10 @@ web/data/*.local.js
 **/__pycache__/
 *.zip
 .DS_Store
+
+# ===== AI 版 / Vercel =====
+.env
+.env.local
+.env.*.local
+.vercel
+node_modules/
