@@ -25,8 +25,11 @@ GitHub Pages 只能放静态网页。API Key 只要写进前端，打开网页�
 网站已经部署好了，只是少了把钥匙。补一个环境变量、重新部署一次即可：
 
 1. 进入 Vercel 项目后台：点 **Continue to Project**（或 https://vercel.com/dashboard 里点这个项目）。
-2. 顶部标签点 **Settings** → 左侧 **Environment Variables**。
-3. 填：
+2. 找到 **Environment Variables** 页。**新版界面菜单改过，别进 `Environments`（那是管生产/预览环境的，不是加变量）**：
+   - ⚠️ 在 `Settings → Environments` 页里**不要**点右上角 **Create Environment**，也**不要**点 **Upgrade**（收费功能，与加 key 无关）。
+   - ✅ **最稳**：用项目左上角那个 **Find / 搜索框**（快捷键 `F`）直接搜 `Environment Variables`，点搜索结果跳过去 —— 不用猜菜单位置。
+   - 备选直达链接（打不开就别纠结，用上面的搜索框）：`https://vercel.com/<你的团队>/qiaoqiao-ai/settings/environment-variables`
+3. 在 Environment Variables 页填：
    - **Key / Name**：`DEEPSEEK_API_KEY`
    - **Value**：你的 `sk-…`
    - **Environment**：Production 勾上（默认全勾也行）
