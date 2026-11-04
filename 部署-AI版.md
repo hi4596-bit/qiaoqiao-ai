@@ -20,6 +20,28 @@ GitHub Pages 只能放静态网页。API Key 只要写进前端，打开网页�
 
 > `vercel.json` 已配好：静态文件从 `web/` 出，`api/chat.js` 自动成为服务端函数，根路径重写到 `chat.html`。
 
+### 如果 Deploy 时忘了填 Key（事后补，不用重新导入）
+
+网站已经部署好了，只是少了把钥匙。补一个环境变量、重新部署一次即可：
+
+1. 进入 Vercel 项目后台：点 **Continue to Project**（或 https://vercel.com/dashboard 里点这个项目）。
+2. 顶部标签点 **Settings** → 左侧 **Environment Variables**。
+3. 填：
+   - **Key / Name**：`DEEPSEEK_API_KEY`
+   - **Value**：你的 `sk-…`
+   - **Environment**：Production 勾上（默认全勾也行）
+   - 点 **Save**。
+4. **必须重新部署一次才会生效**：顶部 **Deployments** → 最近那条 → 右侧 **…** → **Redeploy**（或随便 `git push` 一下也会自动重新部署）。
+5. 等 30 秒，打开网站，顶部显示 **「AI 已接 ✓」** 就成功了。
+
+> 只加环境变量不 Redeploy，正在跑的那次部署读不到新值——这是最常见的坑。
+
+### 现在没有 DeepSeek Key 怎么办
+
+- 去 https://platform.deepseek.com/api_keys 注册 → 创建 API Key → 充几块钱就能用很久。
+- 没 key 期间网站**照样能打开**：AI 调用会降级成「资料检索结果」，不白屏。拿到 key 按上面补即可。
+- 或者直接用**直连版**（`乔侨爱学习-AI直连版.html`），那个是填自己 key、不需要 Vercel 环境变量。
+
 ## 以后改了怎么更新
 `git push` 到 GitHub，Vercel 会自动重新部署（和 GitHub Pages 一样）。
 
