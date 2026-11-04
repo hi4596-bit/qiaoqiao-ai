@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>乔侨爱学习 · 业务问答</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>乔侨爱学习 · 业务问答</h1>
+    <p class="sub">问学费 / 学位 / 备案，或"按XX风格写"。纯前端检索，数据不出本机。</p>
+    <div class="bar">
+      <label>数据源：<select id="src"><option value="sample">示例数据（演示）</option><option value="app">本机真实数据</option></select></label>
+      <span id="stat"></span>
+    </div>
+  </header>
+  <main id="log"></main>
+  <footer>
+    <input id="q" placeholder="例如：广开土木工程学费多少 / 按示例-文老师的风格写一条" autocomplete="off">
+    <button id="send">发送</button>
+  </footer>
+</div>
+<script src="data/sample-data.js"></script>
+<script src="data/app-data.js" onerror="void 0"></script>
+<script src="app.js"></script>
+</body>
+</html>

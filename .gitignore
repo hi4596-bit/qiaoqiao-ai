@@ -1,0 +1,15 @@
+# ===== 真实业务数据一律不进公开仓库 =====
+# 明文成稿 / 风格卡训练结果
+skills/qiaoqiao-style/learned/*
+!skills/qiaoqiao-style/learned/README.txt
+# 官方底表知识库 / 原始底表
+skills/qiaoqiao-kb/kb/
+skills/qiaoqiao-kb/sources/*
+!skills/qiaoqiao-kb/sources/README.txt
+skills/*/sources/*.xlsx
+# 本机真实网页数据（scripts/export_web_data.py 生成，含真实业务，勿提交）
+web/data/app-data.js
+web/data/*.local.js
+**/__pycache__/
+*.zip
+.DS_Store
