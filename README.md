@@ -46,3 +46,5 @@ python scripts/export_web_data.py   # 生成 web/data/app-data.js（含真实业
 
 ## 许可
 工具脚本按 MIT 开源；`examples/` 为虚构示例。业务专用技能（含真实口径/样稿）仅在本机使用，未包含在本仓库。
+
+<!-- pages trigger -->
